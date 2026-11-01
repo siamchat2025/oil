@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>บันทึกข้อมูลค่าน้ำมันและค่าใช้จ่าย</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Sarabun', sans-serif; } </style>
+</head>
+<body class="bg-emerald-50/50 min-h-screen text-slate-700 p-4 md:p-8 flex items-center justify-center">
+  <div class="max-w-md w-full bg-white rounded-3xl shadow-lg border border-emerald-100 p-6 md:p-8 space-y-6">
+    
+    <div class="text-center space-y-1">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold shadow-inner">
+        <i class="fa-solid fa-file-pen"></i>
+      </div>
+      <h1 class="text-xl font-bold text-emerald-900">บันทึกข้อมูลการเดินทาง</h1>
+      <p class="text-xs text-emerald-600">กรอกข้อมูลรายละเอียดเพื่อบันทึกลงระบบ</p>
+    </div>
+
+    <form id="dataForm" onsubmit="submitForm(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">วันที่</label>
+        <input type="date" id="date" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 bg-emerald-50/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">เวลา</label>
+        <input type="time" id="time" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 bg-emerald-50/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">ชื่อผู้ขับ (Worker)</label>
+        <select id="driver" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+          <option value="">-- กำลังโหลดชื่อผู้ขับ... --</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">ที่หมาย (pin)</label>
+        <select id="pin" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+          <option value="">-- กำลังโหลดที่หมาย... --</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">ทะเบียนรถ (plate)</label>
+        <select id="plate" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+          <option value="">-- กำลังโหลดทะเบียนรถ... --</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">จำนวนเงิน (บาท)</label>
+        <input type="number" step="0.01" id="amount" placeholder="0.00" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 bg-emerald-50/20">
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-emerald-700 mb-1">เลขบัตรเครดิต (card)</label>
+        <select id="card" required class="w-full border border-emerald-200 rounded-xl px-3.5 py-2.5 text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+          <option value="">-- กำลังโหลดเลขบัตร... --</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submitBtn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-md transition flex items-center justify-center gap-2 mt-2">
+        <i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล
+      </button>
+    </form>
+  </div>
+
+  <!-- Modal แจ้งเตือน -->
+  <div id="customModal" class="fixed inset-0 bg-emerald-950/40 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center space-y-4 border border-emerald-100">
+      <div id="modalIcon" class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <div>
+        <h3 id="modalTitle" class="text-base font-bold text-emerald-900">แจ้งเตือน</h3>
+        <p id="modalMessage" class="text-xs text-slate-600 mt-1">ข้อความ...</p>
+      </div>
+      <button onclick="closeModal()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl text-sm shadow-sm transition">ตกลง</button>
+    </div>
+  </div>
+
+  <script>
+    // แทนที่ URL ด้านล่างด้วย URL Web App ของ Google Apps Script ที่คุณ Deploy
+    const API_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL";
+
+    window.onload = function() {
+      // ตั้งค่าวันที่และเวลาปัจจุบันเป็นค่าเริ่มต้น
+      const now = new Date();
+      document.getElementById('date').value = now.toISOString().split('T')[0];
+      document.getElementById('time').value = now.toTimeString().split(' ')[0].substring(0,5);
+
+      // ดึงข้อมูล Dropdown จาก GAS API
+      fetch(API_URL)
+        .then(res => res.json())
+        .then(data => {
+          populateSelect('driver', data.workers, '-- เลือกชื่อผู้ขับ --');
+          populateSelect('pin', data.pins, '-- เลือกที่หมาย --');
+          populateSelect('plate', data.plates, '-- เลือกทะเบียนรถ --');
+          populateSelect('card', data.cards, '-- เลือกเลขบัตรเครดิต --');
+        })
+        .catch(err => {
+          showModal('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลตัวเลือกได้: ' + err, true);
+        });
+    };
+
+    function populateSelect(elementId, items, defaultText) {
+      const select = document.getElementById(elementId);
+      select.innerHTML = `<option value="">${defaultText}</option>`;
+      items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item;
+        opt.textContent = item;
+        select.appendChild(opt);
+      });
+    }
+
+    function submitForm(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+      const payload = {
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        driver: document.getElementById('driver').value,
+        pin: document.getElementById('pin').value,
+        plate: document.getElementById('plate').value,
+        amount: document.getElementById('amount').value,
+        card: document.getElementById('card').value
+      };
+
+      fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+        if (res.status === 'success') {
+          showModal('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว');
+          document.getElementById('dataForm').reset();
+          // รีเซ็ตวันที่เวลาปัจจุบันอีกรอบ
+          const now = new Date();
+          document.getElementById('date').value = now.toISOString().split('T')[0];
+          document.getElementById('time').value = now.toTimeString().split(' ')[0].substring(0,5);
+        } else {
+          showModal('เกิดข้อผิดพลาด', res.message, true);
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> บันทึกข้อมูล';
+        showModal('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้: ' + err, true);
+      });
+    }
+
+    function showModal(title, message, isError = false) {
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalMessage').textContent = message;
+      const icon = document.getElementById('modalIcon');
+      if (isError) {
+        icon.className = "w-12 h-12 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold";
+        icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+      } else {
+        icon.className = "w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold";
+        icon.innerHTML = '<i class="fa-solid fa-check"></i>';
+      }
+      document.getElementById('customModal').classList.remove('hidden');
+    }
+    function closeModal() {
+      document.getElementById('customModal').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
